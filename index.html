@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekod Latihan Staff Seksyen Parasitologi & Hematologi VRI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (Excel Export) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vri: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col font-sans">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-vri-900 via-vri-800 to-vri-900 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-white p-2.5 rounded-xl shadow-md text-vri-800">
+                    <i class="fa-solid font-bold text-3xl fa-microscope"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight">REKOD LATIHAN STAFF SEKSYEN PARASITOLOGI & HEMATOLOGI</h1>
+                    <p class="text-vri-100 text-sm font-medium">Institut Penyelidikan Veterinar (VRI), Ipoh</p>
+                </div>
+            </div>
+            <div class="text-right text-xs bg-vri-800/80 backdrop-blur px-3 py-2 rounded-lg border border-vri-700">
+                <div><i class="fa-regular fa-clock mr-1"></i> <span id="current-time"></span></div>
+                <div class="text-vri-100 mt-0.5"><i class="fa-solid fa-database mr-1"></i> LocalStorage Active</div>
+            </div>
+        </div>
+        
+        <!-- Navigation Bar -->
+        <nav class="bg-vri-900/50 border-t border-vri-700/50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex space-x-1 sm:space-x-4 overflow-x-auto py-2 scrollbar-none">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all bg-white/20 text-white shadow-sm">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('records')" id="tab-records" class="nav-tab px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all text-vri-100 hover:bg-white/10 hover:text-white">
+                        <i class="fa-solid fa-list-check"></i> Senarai Rekod
+                    </button>
+                    <button onclick="switchTab('add-form')" id="tab-add-form" class="nav-tab px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all text-vri-100 hover:bg-white/10 hover:text-white">
+                        <i class="fa-solid fa-circle-plus"></i> Tambah Latihan
+                    </button>
+                    <button onclick="switchTab('reports')" id="tab-reports" class="nav-tab px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all text-vri-100 hover:bg-white/10 hover:text-white">
+                        <i class="fa-solid fa-file-invoice"></i> Laporan & Statistik
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" class="tab-content space-y-6">
+            <!-- Summary KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jumlah Staff</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpi-staff-count">6</h3>
+                        <p class="text-xs text-vri-700 mt-1"><i class="fa-solid fa-users text-xs mr-1"></i> Seksyen Parasitologi</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-vri-700 rounded-xl">
+                        <i class="fa-solid fa-user-doctor text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jumlah Latihan</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpi-training-count">0</h3>
+                        <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-calendar-check text-xs mr-1"></i> Keseluruhan rekod</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jumlah Jam</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpi-hours-count">0</h3>
+                        <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-clock text-xs mr-1"></i> Jam latihan dikumpul</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                        <i class="fa-solid fa-hourglass-half text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Purata Jam / Staff</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpi-avg-hours">0</h3>
+                        <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-calculator text-xs mr-1"></i> Purata pencapaian</p>
+                    </div>
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                        <i class="fa-solid fa-chart-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Bar Chart -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-vri-700"></i> Jumlah Jam Latihan Mengikut Staff
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="chartStaffHours"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-vri-700"></i> Pecahan Mengikut Jenis Latihan
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="chartTypeDist"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Recent Records -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-history text-vri-700"></i> Rekod Latihan Terbaharu
+                    </h3>
+                    <button onclick="switchTab('records')" class="text-xs font-semibold text-vri-700 hover:text-vri-900">Lihat Semua ?</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Staff</th>
+                                <th class="p-3">Tajuk Latihan</th>
+                                <th class="p-3">Jenis</th>
+                                <th class="p-3">Tarikh</th>
+                                <th class="p-3">Jumlah Jam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-records-tbody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. RECORDS LIST VIEW -->
+        <section id="view-records" class="tab-content hidden space-y-4">
+            <!-- Filter & Action Controls -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 justify-between items-center">
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari tajuk / penganjur..." class="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-vri-700">
+                    </div>
+
+                    <select id="filter-staff" onchange="applyFilters()" class="text-sm rounded-lg border border-slate-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-vri-700">
+                        <option value="">-- Semua Staff --</option>
+                    </select>
+
+                    <select id="filter-type" onchange="applyFilters()" class="text-sm rounded-lg border border-slate-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-vri-700">
+                        <option value="">-- Semua Jenis --</option>
+                    </select>
+
+                    <button onclick="resetFilters()" class="p-1.5 text-slate-500 hover:text-slate-800 text-sm" title="Reset Filter">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </button>
+                    <button onclick="exportToPDF()" class="bg-rose-700 hover:bg-rose-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </button>
+                    <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-print"></i> Cetak
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-800 text-white uppercase text-xs tracking-wider">
+                            <tr>
+                                <th class="p-3 text-center">Bil</th>
+                                <th class="p-3">Nama Staff</th>
+                                <th class="p-3">Tajuk Latihan</th>
+                                <th class="p-3">Jenis</th>
+                                <th class="p-3">Penganjur</th>
+                                <th class="p-3">Tarikh Mula</th>
+                                <th class="p-3">Masa</th>
+                                <th class="p-3 text-center">Jam</th>
+                                <th class="p-3 text-center">SPLV</th>
+                                <th class="p-3 text-center no-print">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-tbody" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-data-msg" class="p-8 text-center text-slate-400 hidden">
+                    <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
+                    <p>Tiada rekod latihan dijumpai.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. ADD / EDIT RECORD FORM VIEW -->
+        <section id="view-add-form" class="tab-content hidden max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-vri-800 px-6 py-4 text-white flex justify-between items-center">
+                    <h3 class="font-bold text-lg" id="form-title"><i class="fa-solid fa-square-plus mr-2"></i> Tambah Rekod Latihan Baharu</h3>
+                    <span class="text-xs bg-vri-900 px-2.5 py-1 rounded-full text-vri-100 font-medium">Borang Pentadbiran</span>
+                </div>
+
+                <form id="trainingForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                    <input type="hidden" id="edit-record-id" value="">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Staff <span class="text-red-500">*</span></label>
+                            <select id="form-staff" onchange="autoFillJawatan()" required class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                                <option value="">-- Pilih Staff --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Jawatan</label>
+                            <input type="text" id="form-jawatan" readonly placeholder="Dipilih secara automatik" class="w-full text-sm rounded-lg border border-slate-200 bg-slate-100 p-2.5 text-slate-600 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tajuk Latihan / Kursus <span class="text-red-500">*</span></label>
+                        <input type="text" id="form-title-input" required placeholder="Contoh: Kursus Diagnostik Molecular PCR Parasitology" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Jenis Latihan <span class="text-red-500">*</span></label>
+                            <select id="form-type" required class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                                <option value="">-- Pilih Jenis --</option>
+                                <option value="Kursus">Kursus</option>
+                                <option value="Taklimat">Taklimat</option>
+                                <option value="Seminar">Seminar</option>
+                                <option value="Konvensyen">Konvensyen</option>
+                                <option value="Bengkel">Bengkel</option>
+                                <option value="Mesyuarat">Mesyuarat</option>
+                                <option value="Pembentangan">Pembentangan</option>
+                                <option value="Webinar">Webinar</option>
+                                <option value="Lain-lain">Lain-lain</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Penganjur <span class="text-red-500">*</span></label>
+                            <input type="text" id="form-organizer" required placeholder="Contoh: Institut Penyelidikan Veterinar (VRI)" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tarikh Mula <span class="text-red-500">*</span></label>
+                            <input type="date" id="form-start-date" required onchange="calculateHours()" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tarikh Tamat <span class="text-red-500">*</span></label>
+                            <input type="date" id="form-end-date" required onchange="calculateHours()" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Masa Mula</label>
+                            <input type="time" id="form-start-time" value="08:00" onchange="calculateHours()" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Masa Tamat</label>
+                            <input type="time" id="form-end-time" value="17:00" onchange="calculateHours()" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Jumlah Jam <span class="text-xs text-vri-700 font-normal">(Auto)</span></label>
+                            <input type="number" step="0.5" id="form-hours" required min="0" placeholder="0" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none font-bold text-vri-800">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tempat / Lokasi</label>
+                            <input type="text" id="form-location" placeholder="Contoh: Bilik Mesyuarat Utama VRI / Online" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Status SPLV</label>
+                            <select id="form-splv" class="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                                <option value="Selesai">Selesai</option>
+                                <option value="Dalam Proses">Dalam Proses</option>
+                                <option value="Tidak Berkenaan">Tidak Berkenaan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3 border-t border-slate-200">
+                        <button type="button" onclick="cancelForm()" class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 text-sm font-semibold transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-6 py-2.5 rounded-lg bg-vri-800 hover:bg-vri-900 text-white text-sm font-semibold shadow-sm transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Rekod
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 4. REPORTS & STATISTICS VIEW -->
+        <section id="view-reports" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users-rectangle text-vri-700"></i> Ringkasan Latihan Mengikut Staff
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 uppercase text-xs font-semibold">
+                            <tr>
+                                <th class="p-3 border-b">Bil</th>
+                                <th class="p-3 border-b">Nama Staff</th>
+                                <th class="p-3 border-b">Jawatan</th>
+                                <th class="p-3 border-b text-center">Jumlah Sesi Latihan</th>
+                                <th class="p-3 border-b text-center">Jumlah Jam Latihan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-summary-tbody" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-bold text-slate-800 border-t-2 border-slate-300">
+                            <tr>
+                                <td colspan="3" class="p-3 text-right">JUMLAH KESELURUHAN:</td>
+                                <td class="p-3 text-center" id="sum-total-sessions">0</td>
+                                <td class="p-3 text-center text-vri-800" id="sum-total-hours">0 Jam</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days text-vri-700"></i> Laporan Latihan Bulanan
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <select id="monthly-filter-year" onchange="renderMonthlyReport()" class="text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-vri-700 focus:outline-none">
+                            <option value="2026">Tahun 2026</option>
+                            <option value="2025">Tahun 2025</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 uppercase text-xs font-semibold">
+                            <tr>
+                                <th class="p-3 border-b">Bulan</th>
+                                <th class="p-3 border-b text-center">Jumlah Sesi Latihan</th>
+                                <th class="p-3 border-b text-center">Jumlah Jam Latihan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthly-summary-tbody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 text-xs py-6 mt-12 border-t border-slate-700 no-print">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+            <p class="font-semibold text-slate-300">Sistem Rekod Latihan Staff Seksyen Parasitologi & Hematologi (VRI)</p>
+            <p>© 2026 Institut Penyelidikan Veterinar Ipoh. Versi 1.0 (GitHub Pages Ready)</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const PRESET_STAFF = [
+            { name: "Dr. Fazly Ann Binti Zainalabidin", position: "Pegawai Penyelidik Q12" },
+            { name: "Dr. Mukamilliya Binti Aziz", position: "Pegawai Veterinar GV9" },
+            { name: "Premaalatha A/P Bathmanaban", position: "Penolong Pegawai Sains C5" },
+            { name: "Jubrey Bin Musrey", position: "Penolong Pegawai Sains C5" },
+            { name: "Erwanas Asmar Bin Ismail", position: "Pembantu Makmal C2" },
+            { name: "Adnan Bin Musbah", position: "Penolong Pegawai Sains C5" }
+        ];
+
+        const STORAGE_KEY = 'vri_parasitology_training_records';
+        let trainingRecords = [];
+        let chartStaffInstance = null;
+        let chartTypeInstance = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadInitialData();
+            populateDropdowns();
+            renderDashboard();
+            renderTable();
+            renderStaffSummary();
+            renderMonthlyReport();
+        });
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+
+        function loadInitialData() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+                trainingRecords = JSON.parse(storedData);
+            } else {
+                trainingRecords = [
+                    {
+                        id: 'REC-1',
+                        staffName: 'Dr. Fazly Ann Binti Zainalabidin',
+                        position: 'Pegawai Penyelidik Q12',
+                        title: 'Kursus Penyeleksian & Teknik Diagnostik Molecular Parasitologi',
+                        type: 'Kursus',
+                        organizer: 'Institut Penyelidikan Veterinar (VRI)',
+                        startDate: '2026-02-10',
+                        endDate: '2026-02-11',
+                        startTime: '08:30',
+                        endTime: '16:30',
+                        hours: 14,
+                        location: 'Makmal Parasitologi VRI',
+                        splv: 'Selesai'
+                    },
+                    {
+                        id: 'REC-2',
+                        staffName: 'Premaalatha A/P Bathmanaban',
+                        position: 'Penolong Pegawai Sains C5',
+                        title: 'Bengkel Pengurusan Kualiti Lab & Hematologi Veterinar',
+                        type: 'Bengkel',
+                        organizer: 'Jabatan Perkhidmatan Veterinar',
+                        startDate: '2026-03-04',
+                        endDate: '2026-03-04',
+                        startTime: '09:00',
+                        endTime: '17:00',
+                        hours: 7,
+                        location: 'Dewan Syarahan VRI',
+                        splv: 'Selesai'
+                    }
+                ];
+                saveToLocalStorage();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(trainingRecords));
+        }
+
+        function populateDropdowns() {
+            const formStaffSelect = document.getElementById('form-staff');
+            const filterStaffSelect = document.getElementById('filter-staff');
+            const filterTypeSelect = document.getElementById('filter-type');
+
+            formStaffSelect.innerHTML = '<option value="">-- Pilih Staff --</option>';
+            filterStaffSelect.innerHTML = '<option value="">-- Semua Staff --</option>';
+
+            PRESET_STAFF.forEach(staff => {
+                formStaffSelect.innerHTML += `<option value="${staff.name}">${staff.name}</option>`;
+                filterStaffSelect.innerHTML += `<option value="${staff.name}">${staff.name}</option>`;
+            });
+
+            const types = ['Kursus', 'Taklimat', 'Seminar', 'Konvensyen', 'Bengkel', 'Mesyuarat', 'Pembentangan', 'Webinar', 'Lain-lain'];
+            filterTypeSelect.innerHTML = '<option value="">-- Semua Jenis --</option>';
+            types.forEach(t => {
+                filterTypeSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        function autoFillJawatan() {
+            const selectedStaffName = document.getElementById('form-staff').value;
+            const staffObj = PRESET_STAFF.find(s => s.name === selectedStaffName);
+            document.getElementById('form-jawatan').value = staffObj ? staffObj.position : '';
+        }
+
+        function calculateHours() {
+            const startD = document.getElementById('form-start-date').value;
+            const endD = document.getElementById('form-end-date').value;
+            const startT = document.getElementById('form-start-time').value;
+            const endT = document.getElementById('form-end-time').value;
+
+            if (startD && endD && startT && endT) {
+                const startDT = new Date(`${startD}T${startT}`);
+                const endDT = new Date(`${endD}T${endT}`);
+
+                if (endDT >= startDT) {
+                    let diffMs = endDT - startDT;
+                    let diffHrs = diffMs / (1000 * 60 * 60);
+
+                    let daySpan = Math.floor((new Date(endD) - new Date(startD)) / (1000 * 60 * 60 * 24)) + 1;
+                    let dailyHours = (endDT.getHours() + endDT.getMinutes()/60) - (startDT.getHours() + startDT.getMinutes()/60);
+                    if (dailyHours > 4) {
+                        diffHrs -= (1 * daySpan);
+                    }
+                    
+                    document.getElementById('form-hours').value = Math.max(0, diffHrs).toFixed(1);
+                }
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => {
+                el.classList.remove('bg-white/20', 'text-white', 'shadow-sm');
+                el.classList.add('text-vri-100');
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`tab-${tabId}`);
+            activeNav.classList.add('bg-white/20', 'text-white', 'shadow-sm');
+            activeNav.classList.remove('text-vri-100');
+
+            if (tabId === 'dashboard') {
+                renderDashboard();
+            } else if (tabId === 'records') {
+                renderTable();
+            } else if (tabId === 'reports') {
+                renderStaffSummary();
+                renderMonthlyReport();
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('edit-record-id').value;
+            const recordData = {
+                id: editId ? editId : 'REC-' + Date.now(),
+                staffName: document.getElementById('form-staff').value,
+                position: document.getElementById('form-jawatan').value,
+                title: document.getElementById('form-title-input').value,
+                type: document.getElementById('form-type').value,
+                organizer: document.getElementById('form-organizer').value,
+                startDate: document.getElementById('form-start-date').value,
+                endDate: document.getElementById('form-end-date').value,
+                startTime: document.getElementById('form-start-time').value,
+                endTime: document.getElementById('form-end-time').value,
+                hours: parseFloat(document.getElementById('form-hours').value) || 0,
+                location: document.getElementById('form-location').value || '-',
+                splv: document.getElementById('form-splv').value
+            };
+
+            if (editId) {
+                const index = trainingRecords.findIndex(r => r.id === editId);
+                if (index !== -1) trainingRecords[index] = recordData;
+            } else {
+                trainingRecords.unshift(recordData);
+            }
+
+            saveToLocalStorage();
+            alert(editId ? 'Rekod berjaya dikemaskini!' : 'Rekod baharu berjaya disimpan!');
+            cancelForm();
+            switchTab('records');
+        }
+
+        function cancelForm() {
+            document.getElementById('trainingForm').reset();
+            document.getElementById('edit-record-id').value = '';
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-square-plus mr-2"></i> Tambah Rekod Latihan Baharu`;
+        }
+
+        function editRecord(id) {
+            const record = trainingRecords.find(r => r.id === id);
+            if (!record) return;
+
+            document.getElementById('edit-record-id').value = record.id;
+            document.getElementById('form-staff').value = record.staffName;
+            autoFillJawatan();
+            document.getElementById('form-title-input').value = record.title;
+            document.getElementById('form-type').value = record.type;
+            document.getElementById('form-organizer').value = record.organizer;
+            document.getElementById('form-start-date').value = record.startDate;
+            document.getElementById('form-end-date').value = record.endDate;
+            document.getElementById('form-start-time').value = record.startTime || '08:00';
+            document.getElementById('form-end-time').value = record.endTime || '17:00';
+            document.getElementById('form-hours').value = record.hours;
+            document.getElementById('form-location').value = record.location;
+            document.getElementById('form-splv').value = record.splv || 'Selesai';
+
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i> Edit Rekod Latihan`;
+            switchTab('add-form');
+        }
+
+        function deleteRecord(id) {
+            if (confirm('Adakah anda pasti untuk memadam rekod latihan ini?')) {
+                trainingRecords = trainingRecords.filter(r => r.id !== id);
+                saveToLocalStorage();
+                renderTable();
+                renderDashboard();
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('records-tbody');
+            const noData = document.getElementById('no-data-msg');
+            const searchVal = document.getElementById('filter-search').value.toLowerCase();
+            const staffFilter = document.getElementById('filter-staff').value;
+            const typeFilter = document.getElementById('filter-type').value;
+
+            const filtered = trainingRecords.filter(r => {
+                const matchesSearch = r.title.toLowerCase().includes(searchVal) || 
+                                     r.organizer.toLowerCase().includes(searchVal) ||
+                                     r.staffName.toLowerCase().includes(searchVal);
+                const matchesStaff = staffFilter === '' || r.staffName === staffFilter;
+                const matchesType = typeFilter === '' || r.type === typeFilter;
+                return matchesSearch && matchesStaff && matchesType;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                noData.classList.remove('hidden');
+            } else {
+                noData.classList.add('hidden');
+                filtered.forEach((r, idx) => {
+                    const dateDisplay = r.startDate === r.endDate ? formatDate(r.startDate) : `${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+                    const splvBadge = r.splv === 'Selesai' 
+                        ? `<span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium">Selesai</span>`
+                        : `<span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-medium">${r.splv}</span>`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 text-center font-semibold text-slate-500">${idx + 1}</td>
+                            <td class="p-3 font-semibold text-slate-800">${r.staffName}<br><span class="text-xs text-slate-500 font-normal">${r.position}</span></td>
+                            <td class="p-3 font-medium text-slate-900">${r.title}<br><span class="text-xs text-slate-500"><i class="fa-solid fa-location-dot text-slate-400"></i> ${r.location}</span></td>
+                            <td class="p-3"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded border border-slate-200">${r.type}</span></td>
+                            <td class="p-3 text-slate-600">${r.organizer}</td>
+                            <td class="p-3 text-xs whitespace-nowrap text-slate-700">${dateDisplay}</td>
+                            <td class="p-3 text-xs text-slate-500 whitespace-nowrap">${r.startTime} - ${r.endTime}</td>
+                            <td class="p-3 text-center font-bold text-vri-800">${r.hours}</td>
+                            <td class="p-3 text-center">${splvBadge}</td>
+                            <td class="p-3 text-center no-print whitespace-nowrap">
+                                <button onclick="editRecord('${r.id}')" class="text-blue-600 hover:text-blue-800 p-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteRecord('${r.id}')" class="text-rose-600 hover:text-rose-800 p-1 ml-1" title="Padam"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function applyFilters() { renderTable(); }
+        function resetFilters() {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-staff').value = '';
+            document.getElementById('filter-type').value = '';
+            renderTable();
+        }
+
+        function renderDashboard() {
+            const totalTrainings = trainingRecords.length;
+            const totalHours = trainingRecords.reduce((sum, r) => sum + (r.hours || 0), 0);
+            const avgHours = PRESET_STAFF.length ? (totalHours / PRESET_STAFF.length).toFixed(1) : 0;
+
+            document.getElementById('kpi-staff-count').innerText = PRESET_STAFF.length;
+            document.getElementById('kpi-training-count').innerText = totalTrainings;
+            document.getElementById('kpi-hours-count').innerText = totalHours + ' Jam';
+            document.getElementById('kpi-avg-hours').innerText = avgHours + ' Jam';
+
+            const recentTbody = document.getElementById('recent-records-tbody');
+            recentTbody.innerHTML = '';
+            trainingRecords.slice(0, 5).forEach(r => {
+                recentTbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-medium">${r.staffName}</td>
+                        <td class="p-3">${r.title}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-xs px-2 py-1 rounded">${r.type}</span></td>
+                        <td class="p-3 text-xs">${formatDate(r.startDate)}</td>
+                        <td class="p-3 font-bold text-vri-800">${r.hours} Jam</td>
+                    </tr>
+                `;
+            });
+
+            renderCharts();
+        }
+
+        function renderCharts() {
+            const staffHoursMap = {};
+            PRESET_STAFF.forEach(s => staffHoursMap[s.name.split(' ')[0] + ' ' + (s.name.split(' ')[1] || '')] = 0);
+            
+            trainingRecords.forEach(r => {
+                const shortName = r.staffName.split(' ')[0] + ' ' + (r.staffName.split(' ')[1] || '');
+                staffHoursMap[shortName] = (staffHoursMap[shortName] || 0) + (r.hours || 0);
+            });
+
+            const typeMap = {};
+            trainingRecords.forEach(r => {
+                typeMap[r.type] = (typeMap[r.type] || 0) + 1;
+            });
+
+            if (chartStaffInstance) chartStaffInstance.destroy();
+            if (chartTypeInstance) chartTypeInstance.destroy();
+
+            const ctxStaff = document.getElementById('chartStaffHours').getContext('2d');
+            chartStaffInstance = new Chart(ctxStaff, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(staffHoursMap),
+                    datasets: [{
+                        label: 'Jumlah Jam Latihan',
+                        data: Object.values(staffHoursMap),
+                        backgroundColor: '#15803d',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            const ctxType = document.getElementById('chartTypeDist').getContext('2d');
+            chartTypeInstance = new Chart(ctxType, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeMap).length ? Object.keys(typeMap) : ['Tiada Data'],
+                    datasets: [{
+                        data: Object.keys(typeMap).length ? Object.values(typeMap) : [1],
+                        backgroundColor: ['#15803d', '#2563eb', '#d97706', '#9333ea', '#0891b2', '#e11d48']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderStaffSummary() {
+            const tbody = document.getElementById('staff-summary-tbody');
+            tbody.innerHTML = '';
+
+            let grandTotalSessions = 0;
+            let grandTotalHours = 0;
+
+            PRESET_STAFF.forEach((staff, idx) => {
+                const staffRecords = trainingRecords.filter(r => r.staffName === staff.name);
+                const sessionCount = staffRecords.length;
+                const hoursCount = staffRecords.reduce((sum, r) => sum + (r.hours || 0), 0);
+
+                grandTotalSessions += sessionCount;
+                grandTotalHours += hoursCount;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-center font-medium">${idx + 1}</td>
+                        <td class="p-3 font-semibold text-slate-800">${staff.name}</td>
+                        <td class="p-3 text-slate-600">${staff.position}</td>
+                        <td class="p-3 text-center font-bold text-slate-700">${sessionCount}</td>
+                        <td class="p-3 text-center font-bold text-vri-800">${hoursCount} Jam</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('sum-total-sessions').innerText = grandTotalSessions;
+            document.getElementById('sum-total-hours').innerText = grandTotalHours + ' Jam';
+        }
+
+        function renderMonthlyReport() {
+            const year = document.getElementById('monthly-filter-year').value;
+            const tbody = document.getElementById('monthly-summary-tbody');
+            tbody.innerHTML = '';
+
+            const months = [
+                'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+                'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'
+            ];
+
+            months.forEach((monthName, mIdx) => {
+                const monthRecords = trainingRecords.filter(r => {
+                    if (!r.startDate) return false;
+                    const d = new Date(r.startDate);
+                    return d.getFullYear().toString() === year && d.getMonth() === mIdx;
+                });
+
+                const totalSessions = monthRecords.length;
+                const totalHours = monthRecords.reduce((sum, r) => sum + (r.hours || 0), 0);
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">${monthName}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700">${totalSessions}</td>
+                        <td class="p-3 text-center font-bold text-vri-800">${totalHours} Jam</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function exportToExcel() {
+            const dataToExport = trainingRecords.map((r, i) => ({
+                'Bil': i + 1,
+                'Nama Staff': r.staffName,
+                'Jawatan': r.position,
+                'Tajuk Latihan': r.title,
+                'Jenis Latihan': r.type,
+                'Penganjur': r.organizer,
+                'Tarikh Mula': r.startDate,
+                'Tarikh Tamat': r.endDate,
+                'Jumlah Jam': r.hours,
+                'Lokasi': r.location,
+                'SPLV': r.splv
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Rekod Latihan");
+            XLSX.writeFile(workbook, "Rekod_Latihan_Staff_VRI.xlsx");
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+
+            doc.setFontSize(14);
+            doc.text("REKOD LATIHAN STAFF SEKSYEN PARASITOLOGI DAN HEMATOLOGI", 14, 15);
+            doc.setFontSize(11);
+            doc.text("INSTITUT PENYELIDIKAN VETERINAR (VRI), IPOH", 14, 22);
+
+            const tableData = trainingRecords.map((r, i) => [
+                i + 1,
+                r.staffName,
+                r.title,
+                r.type,
+                r.organizer,
+                r.startDate,
+                r.hours,
+                r.splv
+            ]);
+
+            doc.autoTable({
+                head: [['Bil', 'Nama Staff', 'Tajuk Latihan', 'Jenis', 'Penganjur', 'Tarikh', 'Jam', 'SPLV']],
+                body: tableData,
+                startY: 28,
+                theme: 'striped',
+                headStyles: { fillStyle: [21, 128, 61] }
+            });
+
+            doc.save("Rekod_Latihan_Staff_VRI.pdf");
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const parts = dateStr.split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+        }
+    </script>
+</body>
+</html>
